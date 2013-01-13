@@ -25,8 +25,8 @@
 
         controller: 'components/collaborative/controller.php',
 
-        /* Store the filenames and their corresponding local revisions. */
-        filenamesAndRevision: {},
+        /* Store the filenames and their corresponding OperationalTransformationData. */
+        filenamesAndOperationalTransformationData: {},
 
         /* The filename of the file to wich we are currently registered as a
          * collaborator. Might be null if we are not collaborating to any file. */
@@ -94,10 +94,11 @@
 
         registerAsCollaboratorOfActiveFile: function () {
             var filename = codiad.active.getPath();
-            if (!(filename in this.filenamesAndRevision)) {
+            if (!(filename in this.filenamesAndOperationalTransformationData)) {
                 /* If the current file has not already been edited, initialize
-                 * its revision to 0. */
-                this.filenamesAndRevision[filename] = 0;
+                 * its operation transformation data. */
+                this.filenamesAndOperationalTransformationData[filename] =
+                                            new this.OperationalTransformationData();
             }
 
             this.currentFilename = filename;
@@ -242,16 +243,16 @@
         applyCollaboratorsChanges: function () {
             var _this = this;
             if (this.currentFilename !== null) {
-                console.log( { action: 'getUsersAndChangesForFile',
-                            filename: this.currentFilename,
-                            fromRevision: this.filenamesAndRevision[this.currentFilename]  });
+                // console.log( { action: 'getUsersAndChangesForFile',
+                            // filename: this.currentFilename,
+                            // fromRevision: this.filenamesAndRevision[this.currentFilename]  });
                 $.post(this.controller,
                         { action: 'getUsersAndChangesForFile',
                             filename: this.currentFilename,
                             fromRevision: this.filenamesAndRevision[this.currentFilename]  },
                         function (data) {
-                            console.log('complete getUsersAndChangesForFile');
-                            console.log(data);
+                            // console.log('complete getUsersAndChangesForFile');
+                            // console.log(data);
                             var changes = codiad.jsend.parse(data);
                             // _this.$applyChanges(changes);
                         });
@@ -277,8 +278,17 @@
 
         _getDocument: function () {
             return codiad.editor.getActive().getSession().getDocument();
-        }
+        },
 
+        // ---------------------
+        /* Operational transformation algorithm data object. Every
+         * collaboratively edited file requires an
+         * OperationalTransformationData object. */
+        OperationalTransformationData: function () {
+            this.lastSyncedRevision = 0;
+            this.sentChanges = [];
+            this.pendingChanges = [];
+        }
     };
 
 })(this, jQuery);
